@@ -1,5 +1,4 @@
-const express = require('express');
-const { check, validationResult,body } = require('express-validator/check');
+const {body } = require('express-validator/check');
 exports.validate  = (method) => {
     switch (method) {
         case 'registerUser': {
@@ -12,14 +11,11 @@ exports.validate  = (method) => {
             body('password').exists().isLength({ min: 6, max:18 })
            ]   
         }
-        case 'loginUser':{
+        case 'loginUser': {
             return [ 
-                body('name', "User Name is required")
-                .exists()
-                .isAlpha()
-                .isLength({min:3, max:30}),
-                body('email').exists().isEmail(),
-                body('password').exists().isLength({ min: 6, max:18 })
+                body('email','Email is required').exists(),
+                body('email','Enter a valid email address').not().isEmpty(),
+                body('password').not().isEmpty().isLength({ min: 6, max:18 })
             ]   
         }
         default: {

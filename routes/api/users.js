@@ -9,20 +9,6 @@ const validator = require('validator');
 const registerMiddleware = require('../../customeMiddleware/registerMiddleware');
 const { check, validationResult, body  } = require('express-validator/check');
 
-
-// @route   GET api/users/detail
-// @desc    Tests users detail  route
-// @access  Public route
-router.get('/test', ( req, res) => {
- res.json({ msg: "Users Works" });
-});
-
-// register validation middleware
-
-
-    
-
-
 // @route   GET api/users/register
 // @desc    Registration
 // @access  Public route
@@ -32,6 +18,7 @@ router.post('/register', registerMiddleware.validate('registerUser'), (req, res)
     .then(user => {
 
         const errors = validationResult(req);
+        console.log(errors.array());
         if (!errors.isEmpty()) {
             return res.status(422).json({ errors: errors.array() });
         }
@@ -69,11 +56,16 @@ router.post('/register', registerMiddleware.validate('registerUser'), (req, res)
 // @route   GET api/users/login
 // @desc    User Login
 // @access  Public route
-router.post('/login', (req, res) => {
+router.post('/login', registerMiddleware.validate('loginUser'), (req, res) => {
     const email = req.body.email;
     const password = req.body.password;
+        
     User.findOne({email})
         .then(user => {
+            const errors = validationResult(req);
+        if (!errors.isEmpty()){
+            return res.status(422).json({ errors: errors.array() });
+        }
             // check for email
            if(!user){
                 return res.status(404).json({email: 'User Not Found'});
