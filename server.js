@@ -20,7 +20,7 @@ mongoose
     .then(() => {
         console.log('MongoDB is connected')
     })
-    .catch(() => {
+    .catch((err) => {
         console.log(err)
     })
     app.use('/api/users',users);

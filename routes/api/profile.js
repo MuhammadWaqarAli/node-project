@@ -13,12 +13,14 @@ const User  = require('../../models/User');
 
 // @route   GET api/profile
 // @desc    get current user profile route
-// @access  Public route
-router.get('/', passport.authenticate('jwt', {session: false}) , (req,res) => { 
+// @access  Private route
+router.get('/detail', passport.authenticate('jwt', {session: false}) , (req,res) => { 
     const error = {};
     Profile.findOne({
         user: req.user.id
-    }).then( profile => {
+    })
+    .populate('user',['name','email','avatar'])
+    .then( profile => {
         if(!profile){
             error.message = 'No such profile found';
             res.status(404).json(error);
@@ -28,9 +30,72 @@ router.get('/', passport.authenticate('jwt', {session: false}) , (req,res) => {
     .catch(err => res.status(404).json(err));
 });
 
-// @route   POST api/profile/add
-// @desc    get current user profile route
+// @route   GET api/profile/handle/:handle
+// @desc    get profile by handle
 // @access  Public route
+router.get('/handle/:handle',(req, res) => {
+    const error = {};
+    Profile.findOne({handle:req.params.handle})
+    .populate('user',['name','email','avatar'])
+    .then(profile => {
+        if(!profile){
+            error.error = true;
+            error.message = 'No Such Profile Found';
+            res.status(404).json(error)
+        }
+        res.status(200).json(profile);
+    }).catch(err => {
+        error.error = true;
+        error.message = err;
+        res.status(404).json(error)
+    })
+})
+
+// @route   GET api/profile/user/:user_id
+// @desc    get profile by user id 
+// @access  Public route
+router.get('/user/:user_id',(req, res) => {
+    const error = {};
+    Profile.findOne({user:req.params.user_id})
+    .populate('user',['name','email','avatar'])
+    .then(profile => {
+        if(!profile){
+            error.error = true;
+            error.message = 'No Such Profile Found';
+            return res.status(404).json(error)
+        }
+        res.status(200).json(profile);
+    }).catch(err => {
+        error.error = true;
+        error.message = 'No Such Profile found';
+        res.status(404).json(error)
+    })
+})
+
+// @route   GET api/profile
+// @desc    get all profile list
+// @access  Public route
+router.get('/',(req, res) => {
+    const error = {};
+    Profile.find()
+    .populate('user',['name','email','avatar'])
+    .then(profilea => {
+        if(!profiles){
+            error.error = true;
+            error.message = 'No Such Profile Found';
+            return res.status(404).json(error)
+        }
+        res.status(200).json(profiles);
+    }).catch(err => {
+        error.error = true;
+        error.message = 'No Such Profile Found';
+        res.status(404).json(error)
+    })
+})
+
+// @route   POST api/profile
+// @desc    add or update profiel
+// @access  private route
 
 // the below route for both add and update
 router.post('/',profilevalidationMiddleware.validate('profileValidator'), passport.authenticate('jwt', {session: false}) , (req,res) => { 
@@ -45,7 +110,7 @@ router.post('/',profilevalidationMiddleware.validate('profileValidator'), passpo
     if(req.body.company) fieldsData.company = req.body.company;
     if(req.body.website) fieldsData.website = req.body.website;
     if(req.body.location) fieldsData.location = req.body.location;
-    if(req.body.status) fieldsData.status = req.body.status;
+    if(req.body.Mstatus) fieldsData.Mstatus = req.body.Mstatus;
     if(req.body.bio) fieldsData.bio = req.body.bio;
     if(req.body.githubusername) fieldsData.githubusername = req.body.githubusername;
 
@@ -62,7 +127,7 @@ router.post('/',profilevalidationMiddleware.validate('profileValidator'), passpo
     if(req.body.facebook) fieldsData.social.facebook = req.body.facebook;
     if(req.body.linkedin) fieldsData.social.linkedin = req.body.linkedin;
     if(req.body.twitter) fieldsData.social.twitter = req.body.twitter;
-    console.log(req.user.id);
+    console.log(fieldsData);
     Profile.findOne({
         user: req.user.id
     }).then( profile => {
@@ -88,5 +153,75 @@ router.post('/',profilevalidationMiddleware.validate('profileValidator'), passpo
     })
     .catch(err => res.status(404).json(err));
 });
+
+// @route   POST api/profile/education
+// @desc    add education to profile
+// @access  Private route
+router.post('/education',profilevalidationMiddleware.validate('education'),passport.authenticate('jwt',{session:false}),(req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(422).json({ errors: errors.array() });
+    }
+    error = {};
+    Profile.findOne({user: req.user.id})
+    .then(profile => {
+        if(!profile){
+            error.error = true;
+            error.message = 'No Such Profile Found';
+            return res.status(404).json(error)
+        }
+        const newEducation = {
+            school: req.body.school,
+            degree: req.body.degree,
+            fieldofstudy: req.body.fieldofstudy,
+            from: req.body.from,
+            to: req.body.to,
+            current: req.body.current,
+            description: req.body.description,
+        }
+        profile.education.unshift(newEducation);
+        profile.save();
+        res.status(200).json(profile);
+    }).catch(err => {
+        error.error = true;
+        error.message = 'No Such Profile Found';
+        res.status(404).json(error)
+    })
+})
+
+// @route   POST api/profile/experience
+// @desc    add experience to profile
+// @access  Private route
+router.post('/experience',profilevalidationMiddleware.validate('experience'),passport.authenticate('jwt',{session:false}),(req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(422).json({ errors: errors.array() });
+    }
+    error = {};
+    Profile.findOne({user: req.user.id})
+    .then(profile => {
+        if(!profile){
+            error.error = true;
+            error.message = 'No Such Profile Found';
+            return res.status(404).json(error)
+        }
+        const newExperience = {
+            title: req.body.title,
+            company: req.body.company,
+            location: req.body.location,
+            from: req.body.from,
+            to: req.body.to,
+            current: req.body.current,
+            description: req.body.description,
+        }
+        profile.experience.unshift(newExperience);
+        profile.save();
+        res.status(200).json(profile);
+    }).catch(err => {
+        error.error = true;
+        error.message = 'No Such Profile Found';
+        res.status(404).json(error)
+    })
+})
 
 module.exports = router;

@@ -8,7 +8,7 @@ exports.validate  = (method) => {
                 .withMessage('Handle field required')
                 .isLength({min:2,max:40})
                 .withMessage('Handle Must be between 2 aqnd 40 Char'),
-            check('status')
+            check('Mstatus')
                 .not().isEmpty()
                 .withMessage('Status field required'),
             check('skills')
@@ -40,7 +40,22 @@ exports.validate  = (method) => {
             //     .withMessage('fieldofstudy field required')
            ]   
         }
+        case 'experience':{
+            [
+                check('company').not().isEmpty().withMessage('Company Name is required'),
+                check('title').not().isEmpty().withMessage('Job Title is required'),
+                check('from').not().isEmpty().withMessage('Start Date required')
+            ]
+        }
         
+        case 'education':{
+            [
+                check('school').not().isEmpty().withMessage('School Name is required'),
+                check('Degree').not().isEmpty().withMessage('Degree Title is required'),
+                check('fieldofstudy').not().isEmpty().withMessage('Field value required'),
+                check('from').not().isEmpty().withMessage('Start Date required')
+            ]
+        }
         default: {
             return [ ];
         }

@@ -8,7 +8,7 @@ const passport = require('passport');
 const registerMiddleware = require('../../customeMiddleware/registerMiddleware');
 const { check, validationResult, body  } = require('express-validator/check');
 
-// @route   GET api/users/register
+// @route   POST api/users/register
 // @desc    Registration
 // @access  Public route
 // in below route we will passing validation as a middleware and have to pass param same as field
@@ -51,10 +51,10 @@ router.post('/register', registerMiddleware.validate('registerUser'), (req, res)
     });
 });
 
-// @route   GET api/users/login
+// @route   POST api/users/login
 // @desc    User Login
 // @access  Public route
-// registerMiddleware.validate('loginUser')  => for using validation as middleware  but it's not working properly
+// registerMiddleware.validate('loginUser')  => for using validation as middleware
 router.post('/login', registerMiddleware.validate('loginUser'), (req, res) => {
     const email = req.body.email;
     const password = req.body.password;

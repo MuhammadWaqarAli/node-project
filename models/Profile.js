@@ -19,7 +19,7 @@ const ProfileSchema = new Schema({
     location: {
         type: String
     },
-    status: {
+    Mstatus: {
         type: String,
         required: true
     },
