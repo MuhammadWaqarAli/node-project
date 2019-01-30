@@ -1,21 +1,26 @@
-const {body } = require('express-validator/check');
+const {body, check } = require('express-validator/check');
 exports.validate  = (method) => {
     switch (method) {
         case 'registerUser': {
          return [ 
-            body('name', "User Name is required")
-            .exists()
-            .isAlpha()
-            .isLength({min:3, max:30}),
-            body('email').exists().isEmail(),
-            body('password').exists().isLength({ min: 6, max:18 })
-           ]   
+            check('name').not().isEmpty().withMessage('User Name required'),       
+            check('email')
+            .isEmail()
+            .withMessage('Email is not valid'),
+            check('password')
+            .isLength({ min: 5 }).withMessage('must be at least 5 chars long')
+            .matches(/\d/).withMessage('Password must contain a number')
+           ]
         }
         case 'loginUser': {
             return [ 
-                body('email','Email is required').exists(),
-                body('email','Enter a valid email address').not().isEmpty(),
-                body('password').not().isEmpty().isLength({ min: 6, max:18 })
+                
+                check('email')
+                .isEmail()
+                .withMessage('Email is not valid'),
+                check('password')
+                .isLength({ min: 5 }).withMessage('must be at least 5 chars long')
+                .matches(/\d/).withMessage('must contain a number')
             ]   
         }
         default: {

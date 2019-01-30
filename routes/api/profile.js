@@ -3,6 +3,7 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const passport = require('passport');
 const profilevalidationMiddleware = require('../../customeMiddleware/profileMiddleware');
+const { check, validationResult, body  } = require('express-validator/check');
 
 // load profile model 
 const Profile = require('../../models/Profile');
@@ -32,7 +33,11 @@ router.get('/', passport.authenticate('jwt', {session: false}) , (req,res) => {
 // @access  Public route
 
 // the below route for both add and update
-router.post('/add',profilevalidationMiddleware.validate('profileValidator'), passport.authenticate('jwt', {session: false}) , (req,res) => { 
+router.post('/',profilevalidationMiddleware.validate('profileValidator'), passport.authenticate('jwt', {session: false}) , (req,res) => { 
+    const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(422).json({ errors: errors.array() });
+        }
     const error = {};
     const fieldsData = {};
     fieldsData.user = req.user.id;
@@ -45,8 +50,10 @@ router.post('/add',profilevalidationMiddleware.validate('profileValidator'), pas
     if(req.body.githubusername) fieldsData.githubusername = req.body.githubusername;
 
     // we have to set skills in array but we getting in comma seperated format so split out by comma
+   
+    
     if(typeof req.body.skills !== 'undefined'){
-        fieldsData.skills = req.skills.split(',');
+        fieldsData.skills = req.body.skills.split(',');
     }
     // now social filed 
     fieldsData.social = {};
@@ -55,7 +62,7 @@ router.post('/add',profilevalidationMiddleware.validate('profileValidator'), pas
     if(req.body.facebook) fieldsData.social.facebook = req.body.facebook;
     if(req.body.linkedin) fieldsData.social.linkedin = req.body.linkedin;
     if(req.body.twitter) fieldsData.social.twitter = req.body.twitter;
-
+    console.log(req.user.id);
     Profile.findOne({
         user: req.user.id
     }).then( profile => {
@@ -65,7 +72,7 @@ router.post('/add',profilevalidationMiddleware.validate('profileValidator'), pas
                 {user: req.user.id}, 
                 {$set: fieldsData}, 
                 {new: true})
-                .then(profile => res.json(profile));
+                .then(profile => console.log(profile));
         } else{
             // create
             Profile.findOne({handle: req.body.handle})

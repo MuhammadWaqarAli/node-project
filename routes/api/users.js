@@ -5,7 +5,6 @@ const gravatar = require('gravatar');
 const keys = require('../../config/key');
 const jwt = require('jsonwebtoken');
 const passport = require('passport');
-const validator = require('validator');
 const registerMiddleware = require('../../customeMiddleware/registerMiddleware');
 const { check, validationResult, body  } = require('express-validator/check');
 
@@ -18,7 +17,6 @@ router.post('/register', registerMiddleware.validate('registerUser'), (req, res)
     .then(user => {
 
         const errors = validationResult(req);
-        console.log(errors.array());
         if (!errors.isEmpty()) {
             return res.status(422).json({ errors: errors.array() });
         }
@@ -56,6 +54,7 @@ router.post('/register', registerMiddleware.validate('registerUser'), (req, res)
 // @route   GET api/users/login
 // @desc    User Login
 // @access  Public route
+// registerMiddleware.validate('loginUser')  => for using validation as middleware  but it's not working properly
 router.post('/login', registerMiddleware.validate('loginUser'), (req, res) => {
     const email = req.body.email;
     const password = req.body.password;
