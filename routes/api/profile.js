@@ -110,7 +110,7 @@ router.post('/',profilevalidationMiddleware.validate('profileValidator'), passpo
     if(req.body.company) fieldsData.company = req.body.company;
     if(req.body.website) fieldsData.website = req.body.website;
     if(req.body.location) fieldsData.location = req.body.location;
-    if(req.body.Mstatus) fieldsData.Mstatus = req.body.Mstatus;
+    if(req.body.status) fieldsData.status = req.body.status;
     if(req.body.bio) fieldsData.bio = req.body.bio;
     if(req.body.githubusername) fieldsData.githubusername = req.body.githubusername;
 
@@ -127,17 +127,22 @@ router.post('/',profilevalidationMiddleware.validate('profileValidator'), passpo
     if(req.body.facebook) fieldsData.social.facebook = req.body.facebook;
     if(req.body.linkedin) fieldsData.social.linkedin = req.body.linkedin;
     if(req.body.twitter) fieldsData.social.twitter = req.body.twitter;
-    console.log(fieldsData);
+    
     Profile.findOne({
         user: req.user.id
     }).then( profile => {
         if(profile){
-            // update
-            Profile.findByIdAndUpdate(
-                {user: req.user.id}, 
+           
+            Profile.findOneAndUpdate(
+                req.user.id, 
                 {$set: fieldsData}, 
-                {new: true})
-                .then(profile => console.log(profile));
+                {new: true}
+            )
+            .then(profile => {res.json(profile)})
+            .catch(err => {
+                console.log(err);
+                res.status(404).json(err)
+            });
         } else{
             // create
             Profile.findOne({handle: req.body.handle})
@@ -146,12 +151,15 @@ router.post('/',profilevalidationMiddleware.validate('profileValidator'), passpo
                     error.message = 'that handle is already exist'
                     res.status(400).json(error);
                 }     
-                new Profile().save().then(profile => res.json(profile)); 
+                new Profile(fieldsData).save()
+                .then(profile => res.json(profile))
+                .catch(err => {console.log(err)}); 
             })
         }
-        res.status(200).json(profile);
     })
-    .catch(err => res.status(404).json(err));
+    .catch((err) =>{
+        res.status(404).json('OOOO');
+    });
 });
 
 // @route   POST api/profile/education
@@ -224,4 +232,80 @@ router.post('/experience',profilevalidationMiddleware.validate('experience'),pas
     })
 })
 
+// @route   Delete api/profile/experience/:exp_id
+// @desc    add experience to profile
+// @access  Private route
+router.delete('/experience/:exp_id',passport.authenticate('jwt',{session:false}),(req, res) => {
+    
+    const error = {};
+    Profile.findOne({user: req.user.id})
+    .then(profile => {
+        if(!profile){
+            error.error = true;
+            error.message = 'No Such Profile Found';
+            return res.status(404).json(error)
+        }
+        const remIndex = profile.experience
+        .map(item => item.id)
+        .indexOf(req.params.exp_id)
+        profile.experience.splice(remIndex,1)
+        profile.save()
+        .then(profile =>  res.status(200).json(profile))
+        .catch(err => res.status(404).json(err))
+    }).catch(err => {
+        error.error = true;
+        error.message = 'No Such Profile Found';
+        res.status(404).json(err)
+    })
+})
+
+// @route   Delete api/profile/education/:edu_id
+// @desc    delete education from profile
+// @access  Private route
+router.delete('/education/:edu_id',passport.authenticate('jwt',{session:false}),(req, res) => {
+    
+    const error = {};
+    Profile.findOne({user: req.user.id})
+    .then(profile => {
+        if(!profile){
+            error.error = true;
+            error.message = 'No Such Profile Found';
+            return res.status(404).json(error)
+        }
+        const remIndex = profile.education
+        .map(item => item.id)
+        .indexOf(req.params.edu_id)
+        profile.education.splice(remIndex,1)
+        profile.save()
+        .then(profile =>  res.status(200).json(profile))
+        .catch(err => res.status(404).json(err))
+    }).catch(err => {
+        error.error = true;
+        error.message = 'No Such Profile Found';
+        res.status(404).json(err)
+    })
+})
+
+// @route   Delete api/profile/delete
+// @desc    delete profile
+// @access  Private route
+router.delete('/delete',passport.authenticate('jwt',{session:false}),(req, res) => {
+    
+    const error = {};
+    Profile.findOneAndRemove({user: req.user.id})
+    .then(
+        User.findByIdAndRemove({_id : req.user.id})
+        .then( res.status(200).json(
+            {
+                success: true,
+                message: 'user has been deleted.'
+            })
+        )
+        .catch(err => res.status(404).json(err))
+    ).catch(err => {
+        error.error = true;
+        error.message = 'No Such Profile Found';
+        res.status(404).json(err)
+    })
+})
 module.exports = router;
